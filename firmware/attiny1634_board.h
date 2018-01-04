@@ -1,0 +1,19 @@
+#ifndef BOARD_PINOUT_H_
+#define BOARD_PINOUT_H_
+
+#define PORT_LCD_RST PORTC
+#define PIN_LCD_RST PORTC0
+
+#define PORT_LCD_SCE PORTC
+#define PIN_LCD_SCE PORTC1
+
+#define PORT_LCD_DC PORTC
+#define PIN_LCD_DC PORTC2
+
+#define PORT_LCD_DIN PORTC
+#define PIN_LCD_DIN PORTC4
+
+#define PORT_LCD_CLK PORTC
+#define PIN_LCD_CLK PORTC5
+
+#endif /* BOARD_PINOUT_H_ */
