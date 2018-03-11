@@ -1,35 +1,38 @@
 #include "main.h"
 
-
-
+/*
+Initialize the chip registers
+*/
 void init(void)
 {
 	uart_init();	
 }
 
-// function to initialize UART
+/*
+function to initialize UART to communicate with the cell phone over a bluetooth serial connection
+
+Serial connection is 9600 baud non-parity 8-bit.
+*/
 void uart_init (void)
 {
 	UBRR0H = (BAUDRATE>>8);                      // shift the register right by 8 bits
 	UBRR0L = BAUDRATE;                           // set baud rate
 	
-	UCSR0B|= (1<<TXEN0)|(1<<RXEN0)|(1<<RXCIE0);                // enable receiver and transmitter, enable ISR for recieve
+	UCSR0B|= (1<<TXEN0)|(1<<RXEN0)|(1<<RXCIE0);                // enable receiver and transmitter, enable ISR for receive
 	UCSR0C|= (1<<UCSZ00)|(1<<UCSZ01);   // 8bit data format
 }
 
-
-// function to send data
+/*
+function to send data over the UART port
+*/
 void uart_transmit (unsigned char data)
 {
 	while (!( UCSR0A & (1<<UDRE0)));                // wait while register is free
 	UDR0 = data;                                   // load data in the register
 }
 
-
 /*
 Data payload has the following format
-
-
 */
 void parse_data(uint8_t data_length, unsigned char rx_buffer[16])
 {
@@ -257,12 +260,17 @@ ISR(USART0_RX_vect)
 	command_mode = FALSE;
 }
 
+/*
+Display the current machine state on the LCD display
+*/
 void drawDisplay(void)
 {
 	
 }
 
-
+/*
+Main entry point 
+*/
 int main(void)
 {
 	//initialize the chip registers
@@ -271,7 +279,7 @@ int main(void)
 	// enable interrupt service routines, we need these for the ADC
 	sei();
 
-    /* Replace with your application code */
+    // use the main loop to regularly update the display
     while (1) 
     {
 		if (command_ready == TRUE) 
