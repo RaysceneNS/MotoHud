@@ -123,6 +123,9 @@
     <Compile Include="attiny1634_board.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="bitmap.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>

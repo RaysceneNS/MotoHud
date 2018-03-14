@@ -14,18 +14,52 @@ void LcdInitialise(void)
 	LcdWrite(LCD_CMD, PCD8544_DISPLAYCONTROL | PCD8544_DISPLAYNORMAL);
 }
 
+/*
+Print an ascii character at the current screen location font is 7x5
+*/
 void LcdCharacter(char character)
 {
-	LcdWrite(LCD_DATA, 0x00);
 	for (int index = 0; index < 5; index++)
 	{
 		LcdWrite(LCD_DATA, ASCII[character - 0x20][index]);
 	}
-	LcdWrite(LCD_DATA, 0x00);
 }
 
+/*
+Draw a medium digit at the current position
+*/
+void LcdMediumDigit(uint8_t x, uint8_t y, char character)
+{
+	LcdGotoXY(x,y);
+	for (int index = 0; index < 12; index++)
+	{
+		LcdWrite(LCD_DATA, MEDIUMNUMBERS[character - '-'][index]);
+	}
+	LcdGotoXY(x,y+1);
+	for (int index = 0; index < 12; index++)
+	{
+		LcdWrite(LCD_DATA, MEDIUMNUMBERS[character - '-'][index+12]);
+	}
+}
+
+/*
+Draw a gliff at the current position
+*/
+void LcdGliff(uint8_t x, uint8_t y, uint8_t width, const uint8_t *BMP)
+{
+	LcdGotoXY(x, y);
+	for (int index = 0; index < width; index++)
+	{
+		LcdWrite(LCD_DATA, pgm_read_byte(&BMP[index]));
+	}
+}
+
+/*
+Clears the screen by writing zeros to all locations
+*/
 void LcdClear(void)
 {
+	LcdGotoXY(0,0);
 	for (int index = 0; index < 504; index++)
 	{
 		LcdWrite(LCD_DATA, 0x00);
@@ -36,7 +70,9 @@ void LcdString(char *characters)
 {
 	while (*characters)
 	{
+		LcdWrite(LCD_DATA, 0x00);
 		LcdCharacter(*characters++);
+		LcdWrite(LCD_DATA, 0x00);
 	}
 }
 
@@ -84,6 +120,9 @@ void LcdGotoXY(uint8_t x, uint8_t y)
 	LcdWrite(LCD_CMD, 0x40 | y);  // Row.
 }
 
+/*
+Draw a vertical line on the display starts at position x,y and moves down for height pixels
+*/
 void LcdDrawVLine(uint8_t x, uint8_t y, uint8_t height)
 {
 	unsigned char j;
@@ -94,6 +133,9 @@ void LcdDrawVLine(uint8_t x, uint8_t y, uint8_t height)
 	}
 }
 
+/*
+Draw a horizontal line on the display from position x,y and moves right for width
+*/
 void LcdDrawHLine(uint8_t x, uint8_t y, uint8_t width)
 {
 	unsigned char j;
@@ -104,6 +146,11 @@ void LcdDrawHLine(uint8_t x, uint8_t y, uint8_t width)
 	}
 }
 
+/*
+Display the bitmap at location x,y
+
+Bitmaps are RLE encoded
+*/
 void LcdBitmap(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t *BMP)
 {
 	uint8_t col=0, row=0;

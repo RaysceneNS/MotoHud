@@ -5,7 +5,14 @@ Initialize the chip registers
 */
 void init(void)
 {
-	uart_init();	
+	// TODO set port direction registers high is OUT
+	
+	uart_init();
+	LcdInitialise();
+	
+	//turn off unused parts to conserve power
+	//power_usi_disable();
+	power_timer1_disable();
 }
 
 /*
@@ -39,7 +46,7 @@ void parse_data(uint8_t data_length, unsigned char rx_buffer[16])
 	unsigned char t = rx_buffer[0];
 	switch(t)
 	{
-		case 0x01: //direction
+		case 0x01: //turn indicator
 		{
 			directionType = rx_buffer[1];
 			directionRoundAboutOutAngle = rx_buffer[2];
@@ -261,11 +268,228 @@ ISR(USART0_RX_vect)
 }
 
 /*
+Print the turn indicator in the space of 38 width x 40 high
+*/
+void LcdDrawTurnIndicators()
+{
+	//directionOutAngle
+	//directionRoundAboutOutAngle
+	//directionType
+	
+	switch(directionType)
+	{
+		case 0x02: //SharpRight
+		LcdBitmap(0,0,38, 40, DIR_135);
+		break;
+		case 0x04: //Right
+		LcdBitmap(0,0,38, 40, DIR_90);
+		break;
+		case 0x08: //EasyRight
+		LcdBitmap(0,0,38, 40, DIR_45);
+		break;
+		case 0x10: //straight
+		LcdBitmap(0,0,38, 40, DIR_0);
+		break;
+		case 0x20: //EasyLeft
+		LcdBitmap(0,0,38, 40, DIR_315);
+		break;
+		case 0x40: //Left
+		LcdBitmap(0,0,38, 40, DIR_270);
+		break;
+		case 0x80: //SharpLeft
+		LcdBitmap(0,0,38, 40, DIR_225);
+		break;
+	}
+}
+
+/*
+draw the arrival time hh:mm 
+*/
+void LcdDrawTime()
+{
+	////traffic flag
+	//if(traffic == 0x01){
+		//LcdGliff(40, 4, 9, TRAFFIC);
+	//}
+	//arrival flag
+	if(flag == 0x01){
+		LcdGliff(40, 4, 9, CHECK_FLAG);
+	}
+	
+	LcdCharacter(84-28, 4, hourTens);
+	LcdCharacter(84-22, 4, hourOnes);
+	
+	// squish this char 
+	if(colon == 0x01)
+	{
+		LcdCharacter(84-16, 4, ':');
+	}
+	
+	LcdCharacter(84-12, 4, minuteTens);
+	LcdCharacter(84-6, 4, minuteOnes);
+}
+
+/*
+Print the speed warning 
+*/
+void LcdDrawSpeedWarning()
+{
+	LcdCharacter(84-40, 3, speedHundreds);
+	LcdCharacter(84-34, 3, speedTens);
+	LcdCharacter(84-28, 3, speedOnes);
+	
+	// squish this char
+	if(slash == 0xff)
+	{
+		LcdCharacter(84-22, 3, '\\');
+	}
+	
+	LcdCharacter(84-18, 3, limitHundreds);
+	LcdCharacter(84-12, 3, limitTens);
+	LcdCharacter(84-6, 3, limitOnes);
+	
+	//todo speeding indication?
+	//todo icon
+}
+
+/*
+Draw the speed camera
+*/
+void LcdDrawCamera()
+{
+	if(speedCamera == 0x01)
+	{
+		
+	}
+}
+
+/*
+Display the distance to the next maneuver
+*/
+void LcdDrawDistance()
+{
+	//distanceThousands
+	//distanceHundreds
+	//distanceTens
+	//distanceDecimal
+	//distanceOnes
+	//distanceUnit
+	
+	// each medium number is 16x12	
+	if(distanceDecimal == 0x01)
+	{
+		LcdMediumDigit(43, 0, distanceHundreds);
+		LcdMediumDigit(55, 0, distanceTens);
+		LcdGliff(67, 0, 5, decimal);
+		LcdMediumDigit(72, 0, distanceOnes);
+	}
+	else
+	{
+		LcdMediumDigit(36, 0, distanceThousands);
+		LcdMediumDigit(48, 0, distanceHundreds);
+		LcdMediumDigit(60, 0, distanceTens);
+		LcdMediumDigit(72, 0, distanceOnes);
+	}
+	
+	LcdGotoXY(62, 2);
+	switch(distanceUnit)
+	{
+		case 0x01:
+		LcdString("m");
+		break;
+		case 0x03:
+		LcdString("km");
+		break;
+		case 0x05:
+		LcdString("m1");
+		break;
+	}
+}
+
+/*
+Display the lane assist arrows
+
+*/
+void LcdDrawLaneAssistArrows()
+{
+	//lanesOutline dots /outline/outline/outline/outline/outline/outline/ dots"
+	//lanesArrow   none / arrow / arrow / arrow / arrow / arrow / arrow / none"
+	
+	// 2 10 2 |  2 10 2 |  2 10 2 |  2 10 2 |  2 10 2 |  2 10 2
+	if(lanesArrow && 0b10000000 == 0b10000000){
+		LcdGliff(2, 5, 10, LANE_ARROW_DOTS);
+	}
+
+	if(lanesArrow && 0b01000000 == 0b01000000){
+		LcdGliff(2, 5, 10, LANE_ARROW_FILLED);
+	}
+	if(lanesOutline && 0b01000000 == 0b01000000){
+		LcdGliff(2, 5, 10, LANE_ARROW_OUTLINE);
+	}
+
+	if(lanesArrow && 0b00100000 == 0b00100000){
+		LcdGliff(16, 5, 10, LANE_ARROW_FILLED);
+	}
+	if(lanesOutline && 0b00100000 == 0b00100000){
+		LcdGliff(16, 5, 10, LANE_ARROW_OUTLINE);
+	}
+
+	if(lanesArrow && 0b00010000 == 0b00010000){
+		LcdGliff(30, 5, 10, LANE_ARROW_FILLED);
+	}
+	if(lanesOutline && 0b00010000 == 0b00010000){
+		LcdGliff(30, 5, 10, LANE_ARROW_OUTLINE);
+	}
+
+	if(lanesArrow && 0b00001000 == 0b00001000){
+		LcdGliff(44, 5, 10, LANE_ARROW_FILLED);
+	}
+	if(lanesOutline && 0b00001000 == 0b00001000){
+		LcdGliff(44, 5, 10, LANE_ARROW_OUTLINE);
+	}
+
+	if(lanesArrow && 0b00000100 == 0b00000100){
+		LcdGliff(58, 5, 10, LANE_ARROW_FILLED);
+	}
+	if(lanesOutline && 0b00000100 == 0b00000100){
+		LcdGliff(58, 5, 10, LANE_ARROW_OUTLINE);
+	}
+
+	if(lanesArrow && 0b00000010 == 0b00000010){
+		LcdGliff(72, 5, 10, LANE_ARROW_FILLED);
+	}
+	if(lanesOutline && 0b00000010 == 0b00000010){
+		LcdGliff(72, 5, 10, LANE_ARROW_OUTLINE);
+	}
+		
+	if(lanesArrow && 0b00000001 == 0b00000001){
+		LcdGliff(72, 5, 10, LANE_ARROW_DOTS);
+	}
+}
+
+/*
+Display the GPS label
+*/
+void LcdDrawGpsLabel()
+{
+	if(isGps==0x01)
+	{
+		//display the gps label?
+	}
+}
+
+/*
 Display the current machine state on the LCD display
 */
-void drawDisplay(void)
+void LcdDrawDisplay(void)
 {
-	
+	LcdDrawTurnIndicators();
+	LcdDrawLaneAssistArrows();
+	LcdDrawDistance();
+	LcdDrawCamera();
+	LcdDrawTime();
+	LcdDrawSpeedWarning();
+	LcdDrawGpsLabel();
 }
 
 /*
@@ -279,22 +503,51 @@ int main(void)
 	// enable interrupt service routines, we need these for the ADC
 	sei();
 
+	// animate a startup sequence, filling the display from the bottom to the top of the display with horizontal bars
+	// The reason is to allow the ADC to stabilize the internal values after the boot
+	for(uint8_t y = 5; y >= 0; y--)
+	{
+		for(uint8_t x=21; x < 63; x++) // top
+		{
+			LcdGotoXY(x, y);
+			LcdWrite(LCD_DATA, 0xff);
+		}
+		_delay_ms(250);
+	}
+	
+	// enable watch dog, careful that timeout is longer than loop sleep time
+	wdt_enable(WDTO_250MS);
+
     // use the main loop to regularly update the display
+    uint8_t i = 0xff;
     while (1) 
     {
-		if (command_ready == TRUE) 
+		if(i++ == 0)
 		{
-			//copy_command();
-			//process_command();
-
-			command_ready = FALSE;
+			// every 255 loops interject a full screen clear approx every 6.5 secs
+			LcdClear();
 		}
 		
-		//draw the display now to represent the state
-		drawDisplay();
+		//check the blue tooth state pin to determine if we are connected
+		if (PINA & (1<<PINA0))
+		{
+			//draw the display now to represent the state
+			LcdDrawDisplay();				
+		}
+		else
+		{
+			//draw the display now to represent the state
+			LcdGotoXY(0,0);
+			LcdString("Waiting");
+			LcdGotoXY(2,24);
+			LcdString("for");
+			LcdGotoXY(4,0);
+			LcdString("Connection");
+		}
 		
 	    //delay to slow looping
 	    _delay_ms(DELAY_MS);
+	    wdt_reset();
     }
     return 0;
 }

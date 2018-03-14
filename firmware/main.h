@@ -10,6 +10,7 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <avr/power.h>
+#include <avr/wdt.h>
 #include "PCD8544.h"
 #include "attiny1634_board.h"
 
@@ -72,7 +73,6 @@ uint8_t isGps;
 // The inputted commands are never going to be
 // more than 16 chars long. Volatile for the ISR.
 volatile unsigned char rx_buffer[16];
-volatile unsigned char command_ready;
 
 void uart_init (void);
 void init (void);
