@@ -17,28 +17,39 @@ void LcdInitialise(void)
 /*
 Print an ascii character at the current screen location font is 7x5
 */
-void LcdCharacter(char character)
+void LcdCharacter(uint8_t x, uint8_t y, char character)
 {
+	LcdGotoXY(x,y);
 	for (int index = 0; index < 5; index++)
 	{
-		LcdWrite(LCD_DATA, ASCII[character - 0x20][index]);
+		LcdWrite(LCD_DATA, pgm_read_byte(&ASCII[character - 0x20][index]));
 	}
 }
 
 /*
 Draw a medium digit at the current position
 */
-void LcdMediumDigit(uint8_t x, uint8_t y, char character)
+void LcdMediumDigit(uint8_t x, uint8_t y, uint8_t digit)
 {
-	LcdGotoXY(x,y);
-	for (int index = 0; index < 12; index++)
+	uint8_t idx;
+	if(digit == 0x0A)
 	{
-		LcdWrite(LCD_DATA, MEDIUMNUMBERS[character - '-'][index]);
+		idx = 0;
+	}
+	else
+	{
+		idx = digit;
+	}
+	
+	LcdGotoXY(x,y);
+	for (int byt = 0; byt < 12; byt++)
+	{
+		LcdWrite(LCD_DATA, pgm_read_byte(&MEDIUMNUMBERS[idx][byt]));
 	}
 	LcdGotoXY(x,y+1);
-	for (int index = 0; index < 12; index++)
+	for (int byt = 0; byt < 12; byt++)
 	{
-		LcdWrite(LCD_DATA, MEDIUMNUMBERS[character - '-'][index+12]);
+		LcdWrite(LCD_DATA, pgm_read_byte(&MEDIUMNUMBERS[idx][byt+12]));
 	}
 }
 
@@ -66,12 +77,28 @@ void LcdClear(void)
 	}
 }
 
+void LcdClearBlock(uint8_t x, uint8_t y, uint8_t cols, uint8_t rows)
+{
+	for(uint8_t i=0; i<rows;i++)
+	{
+		LcdGotoXY(x,y+i);
+		for (int j= 0; j< cols; j++)
+		{
+			LcdWrite(LCD_DATA, 0x00);
+		}
+	}
+}
+
 void LcdString(char *characters)
 {
 	while (*characters)
 	{
 		LcdWrite(LCD_DATA, 0x00);
-		LcdCharacter(*characters++);
+		uint8_t c = (*characters++) - 0x20;
+		for (int index = 0; index < 5; index++)
+		{
+			LcdWrite(LCD_DATA, pgm_read_byte(&ASCII[c][index]));
+		}
 		LcdWrite(LCD_DATA, 0x00);
 	}
 }
@@ -121,47 +148,22 @@ void LcdGotoXY(uint8_t x, uint8_t y)
 }
 
 /*
-Draw a vertical line on the display starts at position x,y and moves down for height pixels
-*/
-void LcdDrawVLine(uint8_t x, uint8_t y, uint8_t height)
-{
-	unsigned char j;
-	for(j=y; j<(y+height); j++) // Right
-	{
-		LcdGotoXY (x, j);
-		LcdWrite (LCD_DATA, 0xff);
-	}
-}
-
-/*
-Draw a horizontal line on the display from position x,y and moves right for width
-*/
-void LcdDrawHLine(uint8_t x, uint8_t y, uint8_t width)
-{
-	unsigned char j;
-	for(j=x; j<(x+width); j++) // top
-	{
-		LcdGotoXY (j, y);
-		LcdWrite (LCD_DATA, 0x01);
-	}
-}
-
-/*
 Display the bitmap at location x,y
 
 Bitmaps are RLE encoded
 */
-void LcdBitmap(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t *BMP)
+void LcdBitmap(const uint8_t *BMP)
 {
 	uint8_t col=0, row=0;
 	uint8_t data=0,count=0;
 	uint16_t i=0;
+	uint8_t idx = 0;
 	
-	for (row=0; row < height; row++)
+	for (row=0; row < 5; row++)
 	{	
-		LcdGotoXY(x, y+row);
+		LcdGotoXY(0, row);
 		
-		for (col=0; col < width; col++)
+		for (col=0; col < 40; col++)
 		{
 			if(count==0)
 			{
@@ -177,7 +179,23 @@ void LcdBitmap(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_
 				}
 			}
 			count--;
-			LcdWrite(LCD_DATA, data);
+			
+			screen_buff[idx] |= data;
+			idx++;
+		}
+	}
+}
+
+void LcdBitBlt()
+{
+	uint8_t idx = 0;
+	for (uint8_t row=0; row < 5; row++)
+	{
+		LcdGotoXY(0, row);
+		for (uint8_t col=0; col < 40; col++)
+		{
+			LcdWrite(LCD_DATA, screen_buff[idx] );
+			idx++;
 		}
 	}
 }

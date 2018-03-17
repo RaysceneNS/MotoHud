@@ -16,4 +16,6 @@
 #define PORT_LCD_CLK PORTC
 #define PIN_LCD_CLK PORTC5
 
+
+
 #endif /* BOARD_PINOUT_H_ */

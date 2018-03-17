@@ -1,23 +1,26 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define F_CPU 1000000UL         /* 8MHz crystal oscillator / div8 */
-// define some macros
-#define BAUD 9600                                   // define baud
+#define F_CPU 8000000UL         /* 8MHz crystal oscillator / div8 */
+#define BAUD 38400              // define baud
 
 #include <stdint.h>       // needed for uint8_t
+#include <stdlib.h>       // needed for itoa
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <avr/power.h>
 #include <avr/wdt.h>
+#include <avr/pgmspace.h>
 #include "PCD8544.h"
 #include "attiny1634_board.h"
+#include "bitmap.h"
 
-#define DELAY_MS 25
+#define DELAY_MS 40 // the delay between screen updates 1000ms/40ms = 25fps
 
 #define BAUDRATE ((F_CPU)/(BAUD*16UL)-1)            // set baud rate value for UBRR
 
+// define some macros for bit manipulations
 #define SETBIT(ADDRESS,BIT) (ADDRESS |= (1<<BIT))
 #define CLEARBIT(ADDRESS,BIT) (ADDRESS &= ~(1<<BIT))
 
@@ -31,50 +34,67 @@
 #define STATE_CHECK_PREAMBLE 4
 #define STATE_MESSAGE_READY 5
 
-// state variables for the display
-// direction
-uint8_t directionType;
-uint8_t directionRoundAboutOutAngle;
-uint8_t directionOutAngle;
+// Next turn indicators
+volatile uint8_t directionType;
+volatile uint8_t directionAvailableAngles;
+volatile uint8_t directionOutAngle;
 //lanes
-uint8_t lanesArrow;
-uint8_t lanesOutline;
+volatile uint8_t lanesArrow;
+volatile uint8_t lanesOutline;
 //distance
-uint8_t distanceThousands;
-uint8_t distanceHundreds;
-uint8_t distanceTens;
-uint8_t distanceDecimal;
-uint8_t distanceOnes;
-uint8_t distanceUnit;
+volatile uint8_t distanceThousands;
+volatile uint8_t distanceHundreds;
+volatile uint8_t distanceTens;
+volatile uint8_t distanceDecimal;
+volatile uint8_t distanceOnes;
+volatile uint8_t distanceUnit;
 //camera
-uint8_t speedCamera;
+//volatile uint8_t speedCamera;
 //time remain
-uint8_t traffic;
-uint8_t hourTens;
-uint8_t hourOnes;
-uint8_t colon;
-uint8_t minuteTens;
-uint8_t minuteOnes;
-uint8_t flag;
+//volatile uint8_t traffic;
+volatile uint8_t hourTens;
+volatile uint8_t hourOnes;
+volatile uint8_t colon;
+volatile uint8_t minuteTens;
+volatile uint8_t minuteOnes;
+volatile uint8_t flag;
 //speed warning
-uint8_t speedHundreds;
-uint8_t speedTens;
-uint8_t speedOnes;
-uint8_t slash;
-uint8_t limitHundreds;
-uint8_t limitTens;
-uint8_t limitOnes;
-uint8_t isSpeeding;
-uint8_t isIcon;
-//gps label
-uint8_t isGps;
+volatile uint8_t speedHundreds;
+volatile uint8_t speedTens;
+volatile uint8_t speedOnes;
+volatile uint8_t slash;
+volatile uint8_t limitHundreds;
+volatile uint8_t limitTens;
+volatile uint8_t limitOnes;
+//volatile uint8_t isSpeeding;
+//volatile uint8_t isIcon;
 
-
-// The inputted commands are never going to be
-// more than 16 chars long. Volatile for the ISR.
-volatile unsigned char rx_buffer[16];
+uint8_t  screen_buff[200];
 
 void uart_init (void);
 void init (void);
+int main(void);
 
+void LcdDrawLaneTurn(void);
+void LcdDrawRoundabout(void);
+void LcdDrawTurnIndicators(void);
+void LcdDrawTime(void);
+void LcdDrawSpeedWarning(void);
+void LcdDrawCamera(void);
+void LcdDrawDistance(void);
+void LcdDrawLaneAssistArrows(void);
+void LcdDrawGpsLabel(void);
+void LcdDrawDisplay(void);
+
+enum State 
+{
+	SharpRight = 0x02,
+	Right = 0x04,
+	EasyRight = 0x08,
+	Straight = 0x10,
+	EasyLeft = 0x20,
+	Left = 0x40,
+	SharpLeft = 0x80,
+};
+	
 #endif /* MAIN_H_ */
