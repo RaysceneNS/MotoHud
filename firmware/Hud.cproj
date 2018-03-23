@@ -142,6 +142,12 @@
     <Compile Include="bitmap.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="drawing.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drawing.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
