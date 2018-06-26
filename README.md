@@ -7,3 +7,5 @@ The goal of this project is to create a low cost display that can be mounted to 
 * Lane assistance.
 * Time to destination.
 * Speed cameras.
+
+![alt text](https://github.com/raysceneNS/MotoHud/raw/master/img/screen%20cap%201.jpg "Screen Cap 1")
