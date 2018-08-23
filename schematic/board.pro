@@ -1,4 +1,4 @@
-update=12/30/2017 4:27:07 PM
+update=8/22/2018 10:10:02 PM
 version=1
 last_client=kicad
 [pcbnew]
@@ -55,3 +55,13 @@ LibName23=atmel
 LibName24=contrib
 LibName25=bt-hc-05
 LibName26=sensors
+[schematic_editor]
+version=1
+PageLayoutDescrFile=
+PlotDirectoryName=
+SubpartIdSeparator=0
+SubpartFirstId=65
+NetFmtName=
+SpiceForceRefPrefix=0
+SpiceUseNetNumbers=0
+LabSize=60
